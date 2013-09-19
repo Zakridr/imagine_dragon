@@ -2,9 +2,26 @@ var gl;
 var XMAX = 2.5;
 var YMAX = 2.5;
 var xRot = 0;
-var xSpeed = 0.03;
 var yRot = 0;
 var currentlyPressedKeys = {};
+
+var origin = [-1.5, 0.0, -10.0];
+
+var triangleMan = {position:[0,0,0], heading:Math.PI / 2, speed: 0.01, turnSpeed: 0.03,
+    facing: function () {return [Math.cos(triangleMan.heading), Math.sin(triangleMan.heading), 0];}
+};
+
+function vec3sum(left, right) {
+    var sum = Array();
+    for (var i = 0; i < 3; i++) {
+        sum.push(left[i] + right[i]);
+    }
+    return sum;
+}
+
+function scalevec(scalar, vector) {
+    return vector.map(function (x) {return x * scalar;});
+}
 
 function degToRad(degrees) {
     return degrees * Math.PI / 180;
@@ -99,9 +116,9 @@ function initBuffers() {
     triangleVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
     var vertices = [
-        0.0,  1.0,  0.0,
-        -1.0, -1.0,  0.0,
-        1.0, -1.0,  0.0
+        1.0,  0.0,  0.0,
+        -1.0, 1.0,  0.0,
+        -1.0, -1.0,  0.0
             ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     triangleVertexPositionBuffer.itemSize = 3;
@@ -131,8 +148,8 @@ function drawScene() {
 
     mat4.identity(mvMatrix);
 
-    mat4.translate(mvMatrix, [-1.5, 0.0, -19.0]);
-    mat4.rotate(mvMatrix, xRot, [0, 0, 1]);
+    mat4.translate(mvMatrix, vec3sum(origin, triangleMan.position));
+    mat4.rotate(mvMatrix, triangleMan.heading, [0, 0, 1]);
 
     // direction vector of triangle:
     // var dir = [
@@ -159,7 +176,7 @@ function animate() {
     if (lastTime != 0) {
         var elapsed = timeNow - lastTime;
 
-        //xRot += (xSpeed * elapsed) / 1000.0;
+        //xRot += (turnSpeed * elapsed) / 1000.0;
         //yRot += (ySpeed * elapsed) / 1000.0;
     }
     lastTime = timeNow;
@@ -190,14 +207,14 @@ function handleKeys() {
     }
     if (currentlyPressedKeys[37]) {
         // Left cursor key
-        xRot += xSpeed;
+        triangleMan.heading += triangleMan.turnSpeed;
         //if (x >= -XMAX) {
             //x -= 0.05;
         //}
     }
     if (currentlyPressedKeys[39]) {
         // Right cursor key
-        xRot -= xSpeed;
+        triangleMan.heading -= triangleMan.turnSpeed;
         //if (x <= XMAX) {
             //x += 0.05;
         //}
@@ -207,6 +224,7 @@ function handleKeys() {
         //if (y <= YMAX) {
             //y += 0.05;
         //}
+        triangleMan.position = vec3sum(triangleMan.position, scalevec(triangleMan.speed, triangleMan.facing()));
     }
     if (currentlyPressedKeys[40]) {
         // Down cursor key
